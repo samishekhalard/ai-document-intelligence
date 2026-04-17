@@ -1,13 +1,12 @@
-"""RAG agent: retrieves evidence, then asks llama3.2 to synthesise the answer."""
+"""RAG agent: retrieves evidence, then asks the local LLM to synthesise the answer."""
 from __future__ import annotations
 
 import math
 import time
 from textwrap import dedent
 
-import ollama
-
 from backend.core.config import get_settings
+from backend.core.llm_client import chat
 from backend.core.logging import get_logger
 from backend.core.models import QueryResponse, RetrievedChunk
 from backend.pipelines.retrieval_pipeline import get_retrieval_pipeline
@@ -46,8 +45,8 @@ def _confidence(chunks: list[RetrievedChunk]) -> float:
 class RAGAgent:
     """Retrieval-Augmented Generation agent.
 
-    Combines hybrid retrieval (:class:`RetrievalPipeline`) with a local
-    Ollama chat model to synthesise grounded answers with inline
+    Combines hybrid retrieval (:class:`RetrievalPipeline`) with the local
+    llama.cpp CPU runtime to synthesise grounded answers with inline
     citations.
 
     Attributes:
@@ -56,13 +55,9 @@ class RAGAgent:
     """
 
     def __init__(self) -> None:
-        """Create a RAG agent bound to the configured Ollama instance."""
+        """Create a RAG agent bound to the singleton llama.cpp client."""
         self.settings = get_settings()
         self.retriever = get_retrieval_pipeline()
-        self._ollama = ollama.Client(
-            host=self.settings.ollama_base_url,
-            timeout=self.settings.ollama_timeout,
-        )
 
     def answer(
         self,
@@ -112,15 +107,14 @@ class RAGAgent:
 
         trace.append("rag:generate")
         try:
-            resp = self._ollama.chat(
-                model=self.settings.ollama_llm_model,
+            answer = chat(
                 messages=[
                     {"role": "system", "content": _SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
                 ],
-                options={"temperature": 0.1, "num_predict": 512},
+                max_tokens=self.settings.llm_max_tokens,
+                temperature=0.1,
             )
-            answer = resp["message"]["content"].strip()
         except Exception as exc:
             log.error(f"LLM generation failed: {exc}")
             answer = (

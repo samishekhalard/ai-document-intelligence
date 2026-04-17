@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-import ollama
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -57,21 +56,17 @@ def _startup() -> None:  # pragma: no cover - side effect
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    """Report Ollama reachability + index size."""
-    reachable = False
-    try:
-        client = ollama.Client(host=settings.ollama_base_url, timeout=5)
-        client.list()
-        reachable = True
-    except Exception as exc:
-        log.warning(f"Ollama unreachable: {exc}")
+    """Report local LLM readiness + index size."""
+    llm_ready = settings.model_path.exists()
+    if not llm_ready:
+        log.warning(f"GGUF model missing at {settings.model_path}")
 
     store = get_store()
     return HealthResponse(
-        status="ok" if reachable else "degraded",
-        ollama_reachable=reachable,
-        llm_model=settings.ollama_llm_model,
-        embed_model=settings.ollama_embed_model,
+        status="ok" if llm_ready else "degraded",
+        llm_ready=llm_ready,
+        llm_model=str(settings.model_path.name),
+        embed_model=settings.embedding_model,
         documents_indexed=store.count_documents(),
     )
 

@@ -36,7 +36,6 @@ class IngestionService:
             FileNotFoundError: If ``path`` does not exist.
             ValueError: If the file type is unsupported or contains
                 no extractable text.
-            ollama.ResponseError: If the embedding backend failed.
         """
         meta, chunks = self.pipeline.prepare(path)
 

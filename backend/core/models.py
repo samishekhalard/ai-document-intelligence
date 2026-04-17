@@ -118,7 +118,7 @@ class UploadResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "degraded", "down"]
-    ollama_reachable: bool
+    llm_ready: bool
     llm_model: str
     embed_model: str
     documents_indexed: int

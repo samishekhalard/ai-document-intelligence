@@ -66,7 +66,7 @@ with st.sidebar:
         st.markdown(f"**LLM:** `{health['llm_model']}`")
         st.markdown(f"**Embeddings:** `{health['embed_model']}`")
         st.markdown(f"**Documents indexed:** {health['documents_indexed']}")
-        st.markdown(f"**Ollama reachable:** {'yes' if health['ollama_reachable'] else 'no'}")
+        st.markdown(f"**LLM ready:** {'yes' if health['llm_ready'] else 'no'}")
     else:
         st.error("Backend unreachable")
 

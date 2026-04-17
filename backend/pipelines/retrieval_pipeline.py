@@ -2,7 +2,8 @@
 
 Flow
 ----
-1. Dense top-K via ChromaDB (cosine similarity against nomic-embed-text).
+1. Dense top-K via ChromaDB (cosine similarity against the local
+   sentence-transformers embedding).
 2. Sparse top-K via BM25 over the same corpus.
 3. Fuse via weighted score combination (configurable 0.7 / 0.3).
 4. Re-rank the fused top-20 to top-5 using a token-overlap signal that
@@ -122,9 +123,6 @@ class RetrievalPipeline:
             A list of :class:`RetrievedChunk` ordered by descending
             relevance. May be empty if the corpus is empty or every
             candidate is filtered out.
-
-        Raises:
-            ollama.ResponseError: If the embedding backend is unreachable.
         """
         top_k = top_k or self.settings.rerank_top_k
         fetch_k = max(self.settings.retrieval_top_k, top_k * 4)

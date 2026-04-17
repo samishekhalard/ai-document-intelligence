@@ -30,10 +30,11 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000)
     api_base_url: str = Field(default="http://localhost:8000")
 
-    ollama_base_url: str = Field(default="http://localhost:11434")
-    ollama_llm_model: str = Field(default="llama3.2")
-    ollama_embed_model: str = Field(default="nomic-embed-text")
-    ollama_timeout: int = Field(default=120)
+    model_path: Path = Field(default=Path("models/llama-3.2-1b.gguf"))
+    embedding_model: str = Field(default="all-MiniLM-L6-v2")
+    llm_n_ctx: int = Field(default=2048)
+    llm_n_threads: int = Field(default=4)
+    llm_max_tokens: int = Field(default=512)
 
     data_dir: Path = Field(default=Path("./data"))
     upload_dir: Path = Field(default=Path("./data/uploads"))

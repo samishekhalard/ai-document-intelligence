@@ -6,10 +6,10 @@ from collections import Counter
 from functools import lru_cache
 from textwrap import dedent
 
-import ollama
 from langdetect import DetectorFactory, LangDetectException, detect
 
 from backend.core.config import get_settings
+from backend.core.llm_client import generate
 from backend.core.logging import get_logger
 from backend.core.models import DocumentType, Entity, NLPAnalysis
 from backend.pipelines.ingestion_pipeline import _classify_heuristic  # type: ignore[attr-defined]
@@ -82,14 +82,10 @@ def _keyphrases(text: str, top_n: int = 8) -> list[str]:
 
 
 class NLPAgent:
-    """spaCy + llama3.2 powered NLP feature extractor."""
+    """spaCy + local llama.cpp NLP feature extractor."""
 
     def __init__(self) -> None:
         self.settings = get_settings()
-        self._ollama = ollama.Client(
-            host=self.settings.ollama_base_url,
-            timeout=self.settings.ollama_timeout,
-        )
 
     # ---- individual tasks ---- #
 
@@ -132,12 +128,11 @@ class NLPAgent:
         if not snippet:
             return ""
         try:
-            resp = self._ollama.chat(
-                model=self.settings.ollama_llm_model,
-                messages=[{"role": "user", "content": _SUMMARY_PROMPT.format(text=snippet)}],
-                options={"temperature": 0.2, "num_predict": 300},
+            return generate(
+                _SUMMARY_PROMPT.format(text=snippet),
+                max_tokens=300,
+                temperature=0.2,
             )
-            return resp["message"]["content"].strip()
         except Exception as exc:
             log.error(f"Summarization failed: {exc}")
             return snippet[:400] + ("..." if len(snippet) > 400 else "")

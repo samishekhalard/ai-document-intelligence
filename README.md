@@ -240,11 +240,21 @@ brew install python@3.11 tesseract tesseract-lang poppler
 sudo apt-get install python3.11 python3.11-venv tesseract-ocr \
   tesseract-ocr-eng tesseract-ocr-rus poppler-utils
 
-# Ollama + model weights
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.2
-ollama pull nomic-embed-text
 ```
+
+**Download Model**
+
+The project runs a fully local, CPU-only LLM via `llama-cpp-python`. No
+API keys, no Ollama, no GPU required. Fetch the quantised GGUF weights:
+
+```bash
+mkdir -p models
+curl -L -o models/llama-3.2-1b.gguf \
+  https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf
+```
+
+Embeddings use `sentence-transformers` (`all-MiniLM-L6-v2`) and are
+downloaded automatically on first use.
 
 **Application**
 
@@ -266,7 +276,7 @@ Open:
 
 ```bash
 docker compose up --build
-# First run pulls llama3.2 + nomic-embed-text into the ollama volume.
+# Mount the downloaded GGUF at models/ before building.
 # UI:  http://localhost:8501
 # API: http://localhost:8000/docs
 ```

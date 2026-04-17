@@ -1,14 +1,14 @@
-"""Embedding generation (via Ollama) and ChromaDB persistence."""
+"""Embedding generation (via sentence-transformers) and ChromaDB persistence."""
 from __future__ import annotations
 
 import time
 from typing import Iterable
 
 import chromadb
-import ollama
 from chromadb.config import Settings as ChromaSettings
 
 from backend.core.config import get_settings
+from backend.core.embedding_client import embed as _embed
 from backend.core.logging import get_logger
 from backend.core.models import Chunk
 
@@ -16,19 +16,15 @@ log = get_logger(__name__)
 
 
 class EmbeddingPipeline:
-    """Generates embeddings with Ollama and persists them into ChromaDB.
+    """Generates embeddings with sentence-transformers and persists them into ChromaDB.
 
     The ChromaDB client is persistent (on-disk) and the collection uses
-    cosine similarity. A single :class:`ollama.Client` instance is reused
-    to keep the HTTP connection warm.
+    cosine similarity. Embeddings are produced by a local, CPU-only
+    SentenceTransformer model loaded via the singleton client.
     """
 
     def __init__(self) -> None:
         self.settings = get_settings()
-        self._ollama = ollama.Client(
-            host=self.settings.ollama_base_url,
-            timeout=self.settings.ollama_timeout,
-        )
         self._chroma = chromadb.PersistentClient(
             path=str(self.settings.chroma_dir),
             settings=ChromaSettings(anonymized_telemetry=False, allow_reset=True),
@@ -52,20 +48,13 @@ class EmbeddingPipeline:
             texts: Raw strings to embed. Order is preserved in the result.
 
         Returns:
-            A list of 768-dim float vectors (one per input string).
-
-        Raises:
-            ollama.ResponseError: If the embedding backend is unreachable
-                or the configured embedding model is not installed.
+            A list of float vectors (one per input string). Vector
+            dimensionality depends on the configured SentenceTransformer
+            model (384 for the default ``all-MiniLM-L6-v2``).
         """
-        vectors: list[list[float]] = []
-        for t in texts:
-            resp = self._ollama.embeddings(
-                model=self.settings.ollama_embed_model,
-                prompt=t,
-            )
-            vectors.append(list(resp["embedding"]))
-        return vectors
+        if not texts:
+            return []
+        return _embed(texts)
 
     # --------- persistence --------- #
 
@@ -80,9 +69,6 @@ class EmbeddingPipeline:
 
         Returns:
             The number of chunks persisted.
-
-        Raises:
-            ollama.ResponseError: If the embedding backend fails mid-batch.
         """
         chunks = list(chunks)
         if not chunks:
