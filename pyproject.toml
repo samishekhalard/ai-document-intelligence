@@ -1,0 +1,82 @@
+[project]
+name = "ai-document-intelligence"
+version = "1.0.0"
+description = "Enterprise AI Document Intelligence Platform — local-first RAG, multi-agent orchestration, multilingual NLP, OCR."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Sami Sheikh", email = "mksulty@gmail.com" },
+]
+keywords = [
+    "rag", "retrieval-augmented-generation", "langchain", "langgraph",
+    "ollama", "chromadb", "nlp", "ocr", "fastapi", "streamlit",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/samishekhalard/ai-document-intelligence"
+Repository = "https://github.com/samishekhalard/ai-document-intelligence"
+Changelog = "https://github.com/samishekhalard/ai-document-intelligence/blob/main/CHANGELOG.md"
+
+# ── Ruff (lint + format) ────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "data", "logs"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",  # line too long — deferred to formatter
+    "B008",  # FastAPI uses Depends() as default values
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "B011"]
+"examples/*" = ["D"]
+
+# ── mypy ────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.11"
+strict_optional = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = ["\\.venv", "data", "logs", "tests"]
+
+# ── pytest ──────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# ── coverage ────────────────────────────────────────────────────────
+[tool.coverage.run]
+branch = true
+source = ["backend"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 60

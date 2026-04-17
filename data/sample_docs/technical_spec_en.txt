@@ -1,0 +1,77 @@
+TECHNICAL SPECIFICATION
+Project: Atlas Retrieval Service v1.2
+Owner: Platform Engineering
+Status: APPROVED
+Last Updated: 2026-02-10
+
+1. OVERVIEW
+
+Atlas is a hybrid retrieval service that combines dense semantic search
+(via nomic-embed-text embeddings) with sparse BM25 lexical matching to
+power enterprise question-answering features. The system serves an
+average of 2,400 queries per minute with a p95 latency target of 350 ms.
+
+2. ARCHITECTURE
+
+The service is composed of three tiers:
+
+  (a) API Gateway (FastAPI, Python 3.11). Handles authentication,
+      rate limiting, and request validation.
+  (b) Retrieval Layer. Performs parallel dense and sparse lookups. Dense
+      vectors are stored in ChromaDB with cosine similarity; sparse
+      scores come from a rank_bm25 index rebuilt nightly.
+  (c) Re-ranker. A lightweight cross-encoder promotes the top 20 fused
+      results down to the top 5 returned to the caller.
+
+All tiers are deployed as stateless containers on Kubernetes with
+horizontal autoscaling based on CPU and queue depth.
+
+3. DATA FLOW
+
+On ingestion, documents pass through the following pipeline:
+  1. MIME sniffing and extractor selection (pypdf, python-docx, tesseract).
+  2. Recursive character splitting (chunk size 512, overlap 64).
+  3. Embedding generation via local Ollama at http://ollama:11434.
+  4. Vector upsert into ChromaDB collection "documents".
+  5. Metadata commit to PostgreSQL.
+
+4. API ENDPOINTS
+
+  POST /upload       ingest a document
+  POST /query        run a RAG query
+  POST /analyze      NLP analysis (NER, classify, summarise)
+  POST /extract-ocr  OCR an image
+  GET  /documents    list indexed documents
+  GET  /health       service health
+
+Authentication is performed via short-lived JWTs issued by the central
+identity provider. Each request is tagged with a trace ID that is
+propagated through OpenTelemetry to the observability stack.
+
+5. PERFORMANCE TARGETS
+
+  - p50 query latency: <= 180 ms
+  - p95 query latency: <= 350 ms
+  - Ingestion throughput: 50 documents / minute / pod
+  - Availability SLO: 99.9% monthly
+
+6. OBSERVABILITY
+
+The service emits structured JSON logs, Prometheus metrics, and
+OpenTelemetry traces. Key dashboards include query latency
+distribution, retrieval precision at 5, and embedding queue depth.
+
+7. SECURITY CONSIDERATIONS
+
+All data at rest is encrypted using AES-256. Uploaded files are
+scanned by ClamAV before processing. PII detection is performed
+by a spaCy pipeline and redacted entities are replaced with tags.
+
+8. OPEN ISSUES
+
+  ATLAS-412: Russian-language tokenisation sometimes splits compound
+             words unexpectedly; tracked for the v1.3 release.
+  ATLAS-421: Cold start embedding latency after pod restart peaks
+             above 900 ms. Warm-up logic is in design review.
+
+Reviewers: M. Chen (Architect), P. Kowalski (SRE), N. Gomez (Security)

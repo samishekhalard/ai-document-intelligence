@@ -1,0 +1,48 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Byte-code / caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environment and secrets
+.env
+.env.local
+
+# Local data & models
+models/*.gguf
+*.db
+data/metadata.db
+data/uploads/
+data/chroma/
+chroma_db/
+
+# Logs
+logs/*.log
+
+# Eval artefacts
+eval/results.json
+
+# Packaging
+*.egg-info/
+build/
+dist/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Tooling session state
+.claude/

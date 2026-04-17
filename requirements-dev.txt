@@ -1,0 +1,6 @@
+# Developer-only dependencies (lint, type-check, coverage).
+# Install with: pip install -r requirements-dev.txt
+ruff==0.8.4
+mypy==1.13.0
+pytest-cov==6.0.0
+types-requests==2.32.0.20241016
