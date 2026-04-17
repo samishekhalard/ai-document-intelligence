@@ -589,7 +589,7 @@ and reports precision@5, keyword-match accuracy, and latency percentiles.
 in production.
 
 - GitHub: [github.com/samishekhalard](https://github.com/samishekhalard)
-- Email: mksulty@gmail.com
+- Email: samishekhalard3@gmail.com
 
 Open to senior AI / ML engineering roles, consulting engagements, and
 interesting research collaborations.
